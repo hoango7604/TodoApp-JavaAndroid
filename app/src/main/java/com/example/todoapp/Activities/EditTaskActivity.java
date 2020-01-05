@@ -31,14 +31,15 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
 
     public int taskId;
 
-    public TextView editTaskTitle, taskTitleLabel, taskDescLabel, taskDateLabel, taskTimeLabel;
-    public EditText taskTitle, taskDesc, taskDate, taskTime;
+    public TextView editTaskTitle, taskTitleLabel, taskDescLabel, taskDateLabel, taskTimeLabel, taskAlarmTimeLabel;
+    public EditText taskTitle, taskDesc, taskDate, taskTime, taskAlarmTime;
     public Button btnSave, btnDelete;
 
     public DatabaseHelper databaseHelper;
 
     public Calendar calendar;
     public String oldTitle, oldDescription, oldDate, oldTime;
+    public int oldAlarmTime;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -122,19 +123,26 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
                 String description = taskDesc.getText().toString().trim();
                 String date = taskDate.getText().toString().trim();
                 String time = taskTime.getText().toString().trim();
-                if (title.isEmpty() || date.isEmpty()) {
+                String alarmTimeText = taskAlarmTime.getText().toString().trim();
+                int alarmTime = 0;
+                if (!alarmTimeText.isEmpty()) {
+                    alarmTime = Integer.parseInt(alarmTimeText);
+                }
+                if (title.isEmpty() || date.isEmpty() || time.isEmpty()) {
                     Toast.makeText(EditTaskActivity.this, "Please fill in missing fields", Toast.LENGTH_SHORT).show();
                     return;
                 }
                 databaseHelper.QueryData("UPDATE TodoList SET title = '" + title + "', description = '" + description + "', date = '" + date + "', " +
-                        "time = '" + time + "' WHERE id = " + taskId);
+                        "time = '" + time + "', alarm_time = " + alarmTime + " WHERE id = " + taskId);
 
 
                 // cancel previous broadcast
                 AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-                NotificationHelper.cancelBroadcast(EditTaskActivity.this, alarmManager, new Task(taskId, oldTitle, oldDescription, oldDate, oldTime));
+                NotificationHelper.cancelBroadcast(EditTaskActivity.this, alarmManager, new Task(taskId, oldTitle, oldDescription, oldDate, oldTime, oldAlarmTime));
 
-                NotificationHelper.scheduleBroadcast(EditTaskActivity.this, alarmManager, new Task(taskId, title, description, date, time), calendar.getTimeInMillis());
+                NotificationHelper.scheduleBroadcast(EditTaskActivity.this, alarmManager, new Task(taskId, title, description, date, time, alarmTime), calendar.getTimeInMillis() - alarmTime * 60 * 1000);
+
+                Toast.makeText(EditTaskActivity.this, "Updated task successfully", Toast.LENGTH_SHORT).show();
                 _backToMainActivity();
             }
         });
@@ -172,6 +180,9 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
         taskTimeLabel.setTypeface(MLight);
         taskTime.setTypeface(MMedium);
 
+        taskAlarmTimeLabel.setTypeface(MLight);
+        taskAlarmTime.setTypeface(MMedium);
+
         btnSave.setTypeface(MMedium);
         btnDelete.setTypeface(MLight);
     }
@@ -182,29 +193,32 @@ public class EditTaskActivity extends AppCompatActivity implements TimePickerDia
         taskTitleLabel = findViewById(R.id.task_title_label);
         taskDescLabel = findViewById(R.id.task_desc_label);
         taskDateLabel = findViewById(R.id.task_date_label);
-        taskTimeLabel= findViewById(R.id.task_time_label);
+        taskTimeLabel = findViewById(R.id.task_time_label);
+        taskAlarmTimeLabel = findViewById(R.id.task_alarm_time_label);
 
         taskTitle = findViewById(R.id.task_title);
         taskDesc = findViewById(R.id.task_desc);
         taskDate = findViewById(R.id.task_date);
         taskTime = findViewById(R.id.task_time);
+        taskAlarmTime = findViewById(R.id.task_alarm_time);
 
         btnSave = findViewById(R.id.btn_save);
         btnDelete = findViewById(R.id.btn_delete);
 
         // get values from intent
-        int id = getIntent().getIntExtra("id", 0);
-        String title = getIntent().getStringExtra("title");
-        String description = getIntent().getStringExtra("description");
-        String date = getIntent().getStringExtra("date");
-        String time = getIntent().getStringExtra("time");
+        taskId = getIntent().getIntExtra("id", 0);
+        oldTitle = getIntent().getStringExtra("title");
+        oldDescription = getIntent().getStringExtra("description");
+        oldDate = getIntent().getStringExtra("date");
+        oldTime = getIntent().getStringExtra("time");
+        oldAlarmTime = getIntent().getIntExtra("alarm_time", 0);
 
         // fill in fields
-        taskId = id;
-        taskTitle.setText(title);
-        taskDesc.setText(description);
-        taskDate.setText(date);
-        taskTime.setText(time);
+        taskTitle.setText(oldTitle);
+        taskDesc.setText(oldDescription);
+        taskDate.setText(oldDate);
+        taskTime.setText(oldTime);
+        taskAlarmTime.setText(oldAlarmTime + "");
 
         // init database
         databaseHelper = new DatabaseHelper(this, "TodoApp.sqlite", null, 1);

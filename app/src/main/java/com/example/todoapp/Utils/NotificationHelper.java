@@ -23,14 +23,15 @@ public class NotificationHelper {
         intent.putExtra("description", task.getDesc());
         intent.putExtra("date", task.getDate());
         intent.putExtra("time", task.getTime());
+        intent.putExtra("alarm_time", task.getAlarmTime());
         PendingIntent pendingIntent = PendingIntent.getBroadcast(
                 context,
                 task.getId(),
                 intent,
-                PendingIntent.FLAG_CANCEL_CURRENT
+                PendingIntent.FLAG_UPDATE_CURRENT
         );
 
-        alarmManager.setExact(AlarmManager.RTC_WAKEUP, timeInMillis, pendingIntent);
+        alarmManager.set(AlarmManager.RTC_WAKEUP, timeInMillis, pendingIntent);
     }
 
     public static void cancelBroadcast(Context context, AlarmManager alarmManager, Task task) {
@@ -40,6 +41,7 @@ public class NotificationHelper {
         intent.putExtra("description", task.getDesc());
         intent.putExtra("date", task.getDate());
         intent.putExtra("time", task.getTime());
+        intent.putExtra("alarm_time", task.getAlarmTime());
         PendingIntent pendingIntent = PendingIntent.getBroadcast(
                 context,
                 task.getId(),
@@ -57,6 +59,7 @@ public class NotificationHelper {
         intent.putExtra("description", task.getDesc());
         intent.putExtra("date", task.getDate());
         intent.putExtra("time", task.getTime());
+        intent.putExtra("alarm_time", task.getAlarmTime());
         PendingIntent pendingIntent = PendingIntent.getActivity(
                 context,
                 task.getId(),

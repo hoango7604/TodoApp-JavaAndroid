@@ -6,15 +6,17 @@ public class Task {
     private String _desc;
     private String _date;
     private String _time;
+    private int _alarmTime;
 
     public Task() {}
 
-    public Task(int id, String title, String desc, String date, String time) {
+    public Task(int id, String title, String desc, String date, String time, int alarmTime) {
         this._id = id;
         this._title = title;
         this._desc = desc;
         this._date = date;
         this._time = time;
+        this._alarmTime = alarmTime;
     }
 
     public int getId() {
@@ -55,5 +57,13 @@ public class Task {
 
     public void setTime(String time) {
         this._time = time;
+    }
+
+    public int getAlarmTime() {
+        return _alarmTime;
+    }
+
+    public void setAlarmTime(int alarmTime) {
+        this._alarmTime = alarmTime;
     }
 }

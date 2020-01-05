@@ -38,6 +38,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.MyViewHolder> 
         final String description = _taskArrayList.get(position).getDesc();
         final String date = _taskArrayList.get(position).getDate();
         final String time = _taskArrayList.get(position).getTime();
+        final int alarmTime = _taskArrayList.get(position).getAlarmTime();
 
         myViewHolder.itemTitle.setText(title);
         myViewHolder.itemDesc.setText(description);
@@ -53,6 +54,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.MyViewHolder> 
                 goToEditTask.putExtra("description", description);
                 goToEditTask.putExtra("date", date);
                 goToEditTask.putExtra("time", time);
+                goToEditTask.putExtra("alarm_time", alarmTime);
                 _context.startActivity(goToEditTask);
             }
         });

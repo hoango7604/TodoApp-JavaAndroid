@@ -7,6 +7,7 @@ import android.app.AlarmManager;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Typeface;
 import android.os.Bundle;
@@ -30,13 +31,14 @@ import java.util.Calendar;
 
 public class NewTaskActivity extends AppCompatActivity implements TimePickerDialog.OnTimeSetListener, DatePickerDialog.OnDateSetListener {
 
-    public TextView newTaskTitle, taskTitleLabel, taskDescLabel, taskDateLabel, taskTimeLabel;
-    public EditText taskTitle, taskDesc, taskDate, taskTime;
+    public TextView newTaskTitle, taskTitleLabel, taskDescLabel, taskDateLabel, taskTimeLabel, taskAlarmTimeLabel;
+    public EditText taskTitle, taskDesc, taskDate, taskTime, taskAlarmTime;
     public Button btnCreate, btnCancel;
 
     public DatabaseHelper databaseHelper;
 
     public Calendar calendar;
+    public String selectedDate;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -120,17 +122,25 @@ public class NewTaskActivity extends AppCompatActivity implements TimePickerDial
                 String description = taskDesc.getText().toString().trim();
                 String date = taskDate.getText().toString().trim();
                 String time = taskTime.getText().toString().trim();
+                String alarmTimeText = taskAlarmTime.getText().toString().trim();
+                int alarmTime = 0;
+                if (!alarmTimeText.isEmpty()) {
+                    alarmTime = Integer.parseInt(alarmTimeText);
+                }
+
                 if (title.isEmpty() || date.isEmpty() || time.isEmpty()) {
                     Toast.makeText(NewTaskActivity.this, "Please fill in missing fields", Toast.LENGTH_SHORT).show();
                     return;
                 }
-                databaseHelper.QueryData("INSERT INTO TodoList VALUES (null, '"+ title +"', '" + description + "', '" + date + "', '" + time + "')");
+                databaseHelper.QueryData("INSERT INTO TodoList VALUES (null, '"+ title +"', '" + description + "', '" + date + "', '" + time + "', " + alarmTime + ")");
                 Cursor data = databaseHelper.GetData("SELECT last_insert_rowid()");
                 if (data.moveToNext()) {
                     int id = data.getInt(0);
-                    Task task = new Task(id, title, description, date, time);
+                    Task task = new Task(id, title, description, date, time, alarmTime);
                     AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-                    NotificationHelper.scheduleBroadcast(NewTaskActivity.this, alarmManager, task, calendar.getTimeInMillis());
+                    NotificationHelper.scheduleBroadcast(NewTaskActivity.this, alarmManager, task, calendar.getTimeInMillis() - alarmTime * 60 * 1000);
+
+                    Toast.makeText(NewTaskActivity.this, "Created new task successfully", Toast.LENGTH_SHORT).show();
                 }
                 _backToMainActivity();
             }
@@ -168,6 +178,9 @@ public class NewTaskActivity extends AppCompatActivity implements TimePickerDial
         taskTimeLabel.setTypeface(MLight);
         taskTime.setTypeface(MMedium);
 
+        taskAlarmTimeLabel.setTypeface(MLight);
+        taskAlarmTime.setTypeface(MMedium);
+
         btnCreate.setTypeface(MMedium);
         btnCancel.setTypeface(MLight);
     }
@@ -179,11 +192,13 @@ public class NewTaskActivity extends AppCompatActivity implements TimePickerDial
         taskDescLabel = findViewById(R.id.task_desc_label);
         taskDateLabel = findViewById(R.id.task_date_label);
         taskTimeLabel = findViewById(R.id.task_time_label);
+        taskAlarmTimeLabel = findViewById(R.id.task_alarm_time_label);
 
         taskTitle = findViewById(R.id.task_title);
         taskDesc = findViewById(R.id.task_desc);
         taskDate = findViewById(R.id.task_date);
         taskTime = findViewById(R.id.task_time);
+        taskAlarmTime = findViewById(R.id.task_alarm_time);
 
         btnCreate = findViewById(R.id.btn_create);
         btnCancel = findViewById(R.id.btn_cancel);
@@ -194,5 +209,10 @@ public class NewTaskActivity extends AppCompatActivity implements TimePickerDial
 
         // init date
         calendar = Calendar.getInstance();
+
+        // get date from intent
+        Intent intent = getIntent();
+        selectedDate = intent.getStringExtra("date");
+        taskDate.setText(selectedDate);
     }
 }

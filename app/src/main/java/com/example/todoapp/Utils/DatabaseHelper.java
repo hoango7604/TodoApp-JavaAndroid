@@ -25,7 +25,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     public void AssertTableTodoListExist() {
         this.QueryData("CREATE TABLE IF NOT EXISTS TodoList(id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                "title VARCHAR(50), description VARCHAR(50), date VARCHAR(20), time VARCHAR(20))");
+                "title VARCHAR(50), description VARCHAR(50), date VARCHAR(20), time VARCHAR(20), alarm_time INTEGER)");
     }
 
     @Override

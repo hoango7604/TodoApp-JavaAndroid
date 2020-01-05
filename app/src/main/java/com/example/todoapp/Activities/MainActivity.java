@@ -1,5 +1,6 @@
 package com.example.todoapp.Activities;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -14,6 +15,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CalendarView;
 import android.widget.TextView;
 
 import com.example.todoapp.Utils.DatabaseHelper;
@@ -22,19 +24,20 @@ import com.example.todoapp.Models.Task;
 import com.example.todoapp.Adapters.TaskAdapter;
 import com.example.todoapp.Utils.NotificationHelper;
 
+import java.text.DateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 
 public class MainActivity extends AppCompatActivity {
 
-    public TextView mainTitle, mainSubtitle, mainEnd;
-    public Button btnAddNew;
-
-//    public DatabaseReference reference;
-    public RecyclerView mainTask;
-    public ArrayList taskArrayList;
-    public TaskAdapter taskAdapter;
+    public CalendarView calendarView;
+    public TextView mainTitle, mainSubtitle, mainTaskCount;
+    public Button btnViewTaskList;
 
     public DatabaseHelper databaseHelper;
+
+    public Calendar calendar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,54 +71,31 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void _retrieveData() {
-        taskArrayList.clear();
-        Cursor data = databaseHelper.GetData("SELECT * FROM TodoList");
-        while (data.moveToNext()) {
-            int index = data.getInt(0);
-            String title = data.getString(1);
-            String description = data.getString(2);
-            String date = data.getString(3);
-            String time = data.getString(4);
-            Task task = new Task(index, title, description, date, time);
-            taskArrayList.add(task);
+        Cursor data = databaseHelper.GetData("SELECT COUNT(*) FROM TodoList WHERE date = '" + _getDateFormat(calendar.getTime()) + "'");
+        if (data.moveToNext()) {
+            int taskCount = data.getInt(0);
+            mainTaskCount.setText("You have " + taskCount + " task(s) to do");
         }
-        taskAdapter.notifyDataSetChanged();
     }
 
-//    private void _retrieveData() {
-//        // get data from firebase
-//        reference = FirebaseDatabase.getInstance().getReference().child("TodoApp");
-////        reference = FirebaseDatabase.getInstance().getReference("TodoApp");
-//        reference.addValueEventListener(new ValueEventListener() {
-//            @Override
-//            public void onDataChange(DataSnapshot dataSnapshot) {
-//                // set code to retrieve data and replace layout
-//                for (DataSnapshot dataSnapshot1: dataSnapshot.getChildren())
-//                {
-//                    Task task = dataSnapshot1.getValue(Task.class);
-//                    taskArrayList.add(task);
-//                }
-////                taskAdapter = new TaskAdapter(MainActivity.this, taskArrayList);
-////                mainTask.setAdapter(taskAdapter);
-//                taskAdapter.notifyDataSetChanged();
-//                Log.d("debug:main-retrieveData", "Can go here");
-//            }
-//
-//            @Override
-//            public void onCancelled(DatabaseError databaseError) {
-//                // set code to show an error
-//                Log.d("debug:main-retrieveData", "Error happened");
-//                Toast.makeText(getApplicationContext(), "No Data", Toast.LENGTH_SHORT).show();
-//            }
-//        });
-//    }
-
     private void _bindEvents() {
-        btnAddNew.setOnClickListener(new View.OnClickListener() {
+        calendarView.setOnDateChangeListener(new CalendarView.OnDateChangeListener() {
+            @Override
+            public void onSelectedDayChange(@NonNull CalendarView view, int year, int month, int dayOfMonth) {
+                calendar.set(Calendar.YEAR, year);
+                calendar.set(Calendar.MONTH, month);
+                calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+//                Log.d("debug:main", "date: " + DateFormat.getDateInstance(DateFormat.SHORT).format(calendar.getTime()));
+                _retrieveData();
+            }
+        });
+
+        btnViewTaskList.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent goToNewTask = new Intent(MainActivity.this, NewTaskActivity.class);
-                startActivity(goToNewTask);
+                Intent goToTaskList = new Intent(MainActivity.this,  TaskListActivity.class);
+                goToTaskList.putExtra("date", _getDateFormat(calendar.getTime()));
+                startActivity(goToTaskList);
             }
         });
     }
@@ -128,23 +108,18 @@ public class MainActivity extends AppCompatActivity {
         // customize font
         mainTitle.setTypeface(MMedium);
         mainSubtitle.setTypeface(MLight);
-        mainEnd.setTypeface(MLight);
-        btnAddNew.setTypeface(MLight);
+        mainTaskCount.setTypeface(MLight);
+        btnViewTaskList.setTypeface(MLight);
     }
 
     private void _bindElements() {
         // bind elements
         mainTitle = findViewById(R.id.main_title);
         mainSubtitle = findViewById(R.id.main_subtitle);
-        mainEnd = findViewById(R.id.main_end);
-        btnAddNew = findViewById(R.id.btn_add_new);
+        mainTaskCount = findViewById(R.id.main_task_count);
+        btnViewTaskList = findViewById(R.id.btn_view_task_list);
 
-        // working with data
-        mainTask = findViewById(R.id.main_task);
-        mainTask.setLayoutManager(new LinearLayoutManager(this));
-        taskArrayList = new ArrayList();
-        taskAdapter = new TaskAdapter(MainActivity.this, taskArrayList);
-        mainTask.setAdapter(taskAdapter);
+        calendarView = findViewById(R.id.calendar_view);
 
         // init database
         databaseHelper = new DatabaseHelper(this, "TodoApp.sqlite", null, 1);
@@ -152,5 +127,13 @@ public class MainActivity extends AppCompatActivity {
 
         // Test data
 //        databaseHelper.QueryData("INSERT INTO TodoList VALUES (null, 'Task 2', 'Can gi lam nay', datetime('now'))");
+
+        // Set current date to calendar
+        calendar = Calendar.getInstance();
+//        Log.d("debug:main", "date: " + DateFormat.getDateInstance(DateFormat.SHORT).format(calendar.getTime()));
+    }
+
+    private String _getDateFormat(Date date) {
+        return DateFormat.getDateInstance(DateFormat.SHORT).format(date.getTime());
     }
 }
